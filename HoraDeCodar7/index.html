@@ -1,0 +1,350 @@
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+	
+	body{
+		font-family: Arial;
+		background-color: #f4f4f4;
+		text-align: center;
+	}
+
+	h1{
+		color: #2c3e50;
+	}
+
+	button{
+		padding: 10px;
+		margin: 5px;
+		background-color: #3498db;
+		color: white;
+		border: none;
+		border-radius: 5px;
+	}
+</style>
+
+<script>
+
+
+const nomeHotel = "Hotel Girassol Real";
+
+
+let nomeUsuario = "";// dados do usuário
+let tentativas = 0;
+
+
+let quartos = new Array(20).fill("L"); // L = livre, O = ocupado
+let reservas = [];
+let hospedes = [];
+let eventosConfirmados = [];
+
+
+let receitaHospedagem = 0;// controle de hospedazem
+let receitaEventos = 0;
+
+
+function inicio(){
+	alert("Bem-vindo ao " + nomeHotel);
+	login();
+}
+
+
+function login(){
+	nomeUsuario = prompt("Digite seu nome:");// função de login
+	solicitarSenha();
+}
+
+
+function solicitarSenha(){
+	let senha = prompt("Digite sua senha:");// valida senha com limite de tentativas
+
+	if(senha == "2678"){
+		alert("Bem-vindo ao Hotel " + nomeHotel + ", " + nomeUsuario + ".");
+		menu();
+	}else{
+		tentativas++;
+		if(tentativas >= 3){
+			alert("Sistema bloqueado.");
+			return;
+		}else{
+			alert("Senha incorreta.");
+			solicitarSenha();
+		}
+	}
+}
+
+
+function menu(){
+
+	let op = parseInt(prompt(
+		"MENU\n1- Reservas\n2- Hóspedes\n3- Eventos\n4- Ar\n5- Abastecimento\n6- Relatórios\n7- Sair"
+	));
+
+	switch(op){
+		case 1: reserva_quartos(); break;
+		case 2: cadastro_hospedes(); break;
+		case 3: eventos(); break;
+		case 4: ar_condicionado(); break;
+		case 5: abastecimento(); break;
+		case 6: relatorios(); break;
+		case 7: sair(); break;
+		default: erro();
+	}
+}
+
+//  RESERVAS 
+function reserva_quartos(){
+
+	
+	let diaria = parseFloat(prompt("Valor da diária:"));// entrada de dados
+	let dias = parseInt(prompt("Dias (1-30):"));
+
+	
+	if(diaria <= 0 || dias <= 0 || dias > 30){// validação
+		alert("Valor inválido, " + nomeUsuario);
+		menu();
+		return;
+	}
+
+	let nome = prompt("Nome do hóspede:");
+
+	
+	let tipo = prompt("Tipo (S/E/L):").toUpperCase();// tipo de quarto
+	let fator = tipo=="E"?1.35:tipo=="L"?1.65:1;
+
+	
+	let quarto = parseInt(prompt("Quarto (1-20):")) - 1;// escolha do quarto
+
+	if(quarto < 0 || quarto >= 20){
+		alert("Quarto inválido");
+		menu();
+		return;
+	}
+
+	
+	while(quartos[quarto] == "O"){// verifica se está ocupado
+		alert("Quarto ocupado");
+		quarto = parseInt(prompt("Escolha outro:")) - 1;
+	}
+
+	
+	let subtotal = diaria * dias * fator;// cálculo
+	let taxa = subtotal * 0.10;
+	let total = subtotal + taxa;
+
+	alert("Total: R$ "+total.toFixed(2));
+
+	
+	let confirma = prompt("Confirmar (S/N)");// confirmação
+
+	if(confirma.toUpperCase()=="S"){
+		quartos[quarto] = "O"; // marca ocupado
+		reservas.push({nome, quarto:quarto+1, total});
+		receitaHospedagem += total;
+		alert("Reserva efetuada");
+	}else{
+		alert("Cancelado");
+	}
+
+	menu();
+}
+
+// HOSPEDES 
+function cadastro_hospedes(){
+
+	let op = parseInt(prompt(
+		"1-Cadastrar\n2-Pesquisar\n3-Prefixo\n4-Listar\n5-Remover\n6-Voltar"
+	));
+
+	if(op==1){
+		
+		if(hospedes.length >= 15){// limite de cadastro
+			alert("Máximo atingido");
+		}else{
+			let nome = prompt("Nome:");
+
+			
+			if(hospedes.find(h=>h.nome==nome)){// evita duplicado
+				alert("Já cadastrado");
+			}else{
+				hospedes.push({nome, data:new Date()});
+				alert("Sucesso");
+			}
+		}
+		cadastro_hospedes();
+
+	}else if(op==2){
+		
+		let nome = prompt("Buscar:");// busca exata
+		let h = hospedes.find(h=>h.nome==nome);
+		alert(h ? "Encontrado" : "Não encontrado");
+		cadastro_hospedes();
+
+	}else if(op==3){
+		
+		let pref = prompt("Prefixo:");// busca por prefixo
+		let lista = hospedes.filter(h=>h.nome.startsWith(pref));
+		alert(lista.map(h=>h.nome).join("\n") || "Nenhum");
+		cadastro_hospedes();
+
+	}else if(op==4){
+		
+		let ordenado = [...hospedes].sort((a,b)=>a.nome.localeCompare(b.nome));// lista ordenada
+		alert(ordenado.map(h=>h.nome).join("\n") || "Vazio");
+		cadastro_hospedes();
+
+	}else if(op==5){
+		
+		let i = parseInt(prompt("Índice:")) -1;// remover por índice
+		if(hospedes[i]){
+			hospedes.splice(i,1);
+			alert("Removido");
+		}else{
+			alert("Inválido");
+		}
+		cadastro_hospedes();
+
+	}else{
+		menu();
+	}
+}
+
+// EVENTOS 
+function eventos(){
+
+	let convidados = parseInt(prompt("Convidados:"));
+
+	
+	if(convidados<0 || convidados>350){// validação
+		alert("Número inválido");
+		menu();
+		return;
+	}
+
+	
+	let auditorio = convidados<=220 ? "Laranja" : "Colorado";// escolha do auditório
+
+	let hora = parseInt(prompt("Hora:"));
+	let duracao = parseInt(prompt("Duração:"));
+	let empresa = prompt("Empresa:");
+
+	
+	let garcons = Math.ceil(convidados/12) + Math.floor(duracao/2);// cálculo garçons
+	let custoGarcons = garcons * duracao * 10.5;
+
+	
+	let cafe = convidados*0.2;// buffet
+	let agua = convidados*0.5;
+	let salgados = convidados*7;
+
+	let custoBuffet = (cafe*0.8)+(agua*0.4)+((salgados/100)*34);
+
+	let total = custoGarcons + custoBuffet;
+
+	alert("Total evento: R$ "+total.toFixed(2));
+
+	let conf = prompt("Confirmar (S/N)");
+
+	if(conf=="S"){
+		eventosConfirmados.push({empresa,total});
+		receitaEventos += total;
+		alert("Evento confirmado");
+	}else{
+		alert("Cancelado");
+	}
+
+	menu();
+}
+
+//  AR 
+function ar_condicionado(){
+
+	let menor = Infinity;
+	let melhor = "";
+
+	while(true){
+
+		let emp = prompt("Empresa:");
+		let v = parseFloat(prompt("Valor:"));
+		let q = parseInt(prompt("Qtd:"));
+		let d = parseFloat(prompt("Desc:"));
+		let m = parseInt(prompt("Min:"));
+		let des = parseFloat(prompt("Deslocamento:"));
+
+		let total = v*q;
+
+		
+		if(q>=m){
+			total -= total*(d/100);// aplica desconto
+		}
+
+		total += des;
+
+		if(total<menor){
+			menor=total;
+			melhor=emp;
+		}
+
+		if(prompt("Continuar? S/N")!="S") break;
+	}
+
+	alert("Melhor: "+melhor+" R$ "+menor.toFixed(2));
+	menu();
+}
+
+//  ABASTECIMENTO 
+function abastecimento(){
+
+	let a1 = parseFloat(prompt("Álcool Wayne:"));
+	let g1 = parseFloat(prompt("Gasolina Wayne:"));
+
+	let a2 = parseFloat(prompt("Álcool Stark:"));
+	let g2 = parseFloat(prompt("Gasolina Stark:"));
+
+	
+	let t1 = (a1<=g1*0.7?a1:g1)*42;// regra dos 70%
+	let t2 = (a2<=g2*0.7?a2:g2)*42;
+
+	alert(t1<t2?"Melhor: Wayne":"Melhor: Stark");
+
+	menu();
+}
+
+//  RELATORIOS 
+function relatorios(){
+
+	let ocup = quartos.filter(q=>q=="O").length;
+
+	alert(
+		"Reservas: "+reservas.length+
+		"\nOcupação: "+((ocup/20)*100).toFixed(1)+"%"+
+		"\nHóspedes: "+hospedes.length+
+		"\nEventos: "+eventosConfirmados.length+
+		"\nReceita: R$ "+(receitaEventos+receitaHospedagem).toFixed(2)
+	);
+
+	menu();
+}
+
+
+function erro(){
+	alert("Opção inválida");
+	menu();
+}
+
+function sair(){
+	alert("Muito obrigado e até logo, "+nomeUsuario);
+}
+
+
+inicio();
+
+</script>
+</head>
+
+<body>
+	<h1>Hotel Girassol Real</h1>
+	<p>Sistema de Gestão</p>
+</body>
+</html>
